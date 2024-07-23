@@ -81,7 +81,6 @@ def mcdonald_omega_total(loadings_matrix):
         omega.append(omega_total)
     return omega
 
-
 def process_constructs_and_items(constructs, items):
 
 
@@ -132,12 +131,17 @@ def process_constructs_and_items(constructs, items):
         
         return results_df, final_alpha
     
-def create_loading_matrix(results_df, constructs, items):
+def create_loading_matrix(results_df, constructs, items, rotation):
+    """
+    
+    This function uses a df created through processing constructs and items and it runs an exploratory FA
+
+    """
     cor_mat = avg_cosine_matrix(constructs, items)
     np.fill_diagonal(cor_mat,1)
     cor_final = cor_mat
     cor_mat = cor_mat[len(constructs):, len(constructs):]
-    fa = FactorAnalyzer(n_factors=len(constructs), method='minres', rotation='oblimin', use_smc=True, is_corr_matrix=True).fit(cor_mat)
+    fa = FactorAnalyzer(n_factors=len(constructs), rotation = rotation, method='minres', use_smc=True, is_corr_matrix=True).fit(cor_mat)
     emp_load = fa.loadings_
     emp_load = pd.DataFrame(fa.loadings_, index=results_df.index, columns=results_df.columns[1:]).add_suffix('_efa_loadings')
     first_column = results_df.iloc[:, :1]

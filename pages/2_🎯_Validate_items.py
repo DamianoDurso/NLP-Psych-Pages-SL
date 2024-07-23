@@ -58,6 +58,8 @@ def text_input_method():
 
     constructs_input = st.sidebar.text_area("Enter Constructs (one per line)", key="constructs")
     items_input = st.sidebar.text_area("Enter Items (one per line)", key="items")
+    rotation_options = ['oblimin', 'promax', 'varimax', 'quartimax']
+    rotation_input = st.sidebar.radio('Rotation', options=rotation_options, index=2)
     if st.sidebar.button("Assess NLPsychometric Properties"):
         constructs = constructs_input.split("\n")
         items = items_input.split("\n")
@@ -91,7 +93,7 @@ def text_input_method():
 
         try:
             #create function out of this
-            cor_final, results_df_add = pfa.create_loading_matrix(results_df, constructs, items)
+            cor_final, results_df_add = pfa.create_loading_matrix(results_df, constructs, items, rotation_input)
 
 
 #            cor_mat = pfa.avg_cosine_matrix(constructs, items)
