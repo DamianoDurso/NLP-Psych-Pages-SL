@@ -83,6 +83,8 @@ def mcdonald_omega_total(loadings_matrix):
 
 
 def process_constructs_and_items(constructs, items):
+
+
     """
     Processes the given constructs and items, computes cosine similarities, and calculates reliability metrics.
     
@@ -129,3 +131,16 @@ def process_constructs_and_items(constructs, items):
         final_alpha['Constructs'] = constructs
         
         return results_df, final_alpha
+    
+def create_loading_matrix(results_df, constructs, items):
+    cor_mat = avg_cosine_matrix(constructs, items)
+    np.fill_diagonal(cor_mat,1)
+    cor_final = cor_mat
+    cor_mat = cor_mat[len(constructs):, len(constructs):]
+    fa = FactorAnalyzer(n_factors=len(constructs), method='minres', rotation='oblimin', use_smc=True, is_corr_matrix=True).fit(cor_mat)
+    emp_load = fa.loadings_
+    emp_load = pd.DataFrame(fa.loadings_, index=results_df.index, columns=results_df.columns[1:]).add_suffix('_efa_loadings')
+    first_column = results_df.iloc[:, :1]
+    results_df_new = results_df.drop('Item', axis=1).add_suffix('_corr')
+    results_df_add = pd.concat([first_column, results_df_new, emp_load], axis=1)
+    return cor_final, results_df_add

@@ -91,15 +91,18 @@ def text_input_method():
 
         try:
             #create function out of this
-            cor_mat = pfa.avg_cosine_matrix(constructs, items)
-            np.fill_diagonal(cor_mat, 1)
-            cor_mat =  cor_mat[len(constructs):, len(constructs):]
-            fa = FactorAnalyzer(n_factors=len(constructs), method='minres', rotation='oblimin', use_smc=True, is_corr_matrix=True).fit(cor_mat)
-            emp_load = fa.loadings_
-            emp_load = pd.DataFrame(fa.loadings_, index=results_df.index, columns=results_df.columns[1:]).add_suffix('_efa_loadings')
-            first_column = results_df.iloc[:, :1]
-            results_df_new = results_df.drop('Item', axis=1).add_suffix('_corr')
-            results_df_add = pd.concat([first_column, results_df_new, emp_load], axis=1)
+            cor_final, results_df_add = pfa.create_loading_matrix(results_df, constructs, items)
+
+
+#            cor_mat = pfa.avg_cosine_matrix(constructs, items)
+#            np.fill_diagonal(cor_mat, 1)
+#            cor_mat =  cor_mat[len(constructs):, len(constructs):]
+#            fa = FactorAnalyzer(n_factors=len(constructs), method='minres', rotation='oblimin', use_smc=True, is_corr_matrix=True).fit(cor_mat)
+#            emp_load = fa.loadings_
+#            emp_load = pd.DataFrame(fa.loadings_, index=results_df.index, columns=results_df.columns[1:]).add_suffix('_efa_loadings')
+#            first_column = results_df.iloc[:, :1]
+#            results_df_new = results_df.drop('Item', axis=1).add_suffix('_corr')
+#            results_df_add = pd.concat([first_column, results_df_new, emp_load], axis=1)
         except Exception as e:
             st.write(f"FactorAnalyzer fitting failed: {e}")
             first_column = results_df.iloc[:, :1]
@@ -108,6 +111,25 @@ def text_input_method():
         
         st.write("Pseudo Loadings")
         st.write(results_df_add)
+
+        st.write("Items Correlations")
+        if len(items) > 1:
+            headers = [item.split()[0] for item in items if item.split()]
+            cor_item = cor_final[1:, 1:]
+            fig, ax = plt.subplots()
+            sns.heatmap(cor_item, yticklabels=headers, xticklabels=headers, annot=True, cmap='cividis', ax=ax)
+            ax.set_title("Item Correlations", fontsize=10)
+            st.pyplot(fig)
+
+        st.write("Construct Correlations")
+        if len(constructs) > 1:
+            headers = [construct.split()[0] for construct in constructs if construct.split()]
+            cor_cons = cor_final[:len(constructs), :len(constructs)]
+            fig, ax = plt.subplots()
+            sns.heatmap(cor_cons, yticklabels=headers, xticklabels=headers, annot=True, cmap='cividis', ax=ax)
+            ax.set_title("Construct Correlations", fontsize=10)
+            st.pyplot(fig)
+
 
 
 def main():
