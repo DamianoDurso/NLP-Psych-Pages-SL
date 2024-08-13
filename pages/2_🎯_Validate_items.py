@@ -24,8 +24,6 @@ if 'model_pfa' not in st.session_state:
     with st.spinner('Loading model...'):
         st.session_state.model_pfa = pfa.load_model_pfa()
 
-
-
 def show_disclaimer():
     st.title("Welcome to Psicometrista's item validation module!")
     st.subheader("Please read the disclaimer before using the app.")
@@ -157,6 +155,25 @@ def upload_method():
     st.write("Pseudo Loadings")
     st.dataframe(results_df_add, hide_index = True)
     
+    st.write("Items Correlations")
+    if len(items) > 1:
+        cor_item = pfa.avg_cosine_matrix([''], items, drop_first=True)
+        headers = [item.split()[0] for item in items if item.split()]
+        fig, ax = plt.subplots()
+        sns.heatmap(cor_item, yticklabels=headers, xticklabels=headers, annot=True, cmap='cividis', ax=ax)
+        ax.set_title("Item Correlations", fontsize=10)
+        st.pyplot(fig)
+    st.write("Construct Correlations")
+    if len(constructs) > 1:
+        constr = list(set(constructs))
+        headers = [construct.split()[0] for construct in constr if construct.split()]
+        cor_cons = pfa.avg_cosine_matrix([''], constr, drop_first=True)
+#        cor_cons = cor_final[:len(constructs), :len(constructs)]
+        fig, ax = plt.subplots()
+        sns.heatmap(cor_cons, yticklabels=headers, xticklabels=headers, annot=True, cmap='cividis', ax=ax)
+        ax.set_title("Construct Correlations", fontsize=10)
+        st.pyplot(fig)
+
 
 def main():
     if 'show_disclaimer' not in st.session_state:
