@@ -47,10 +47,12 @@ def upload_data():
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
         st.write("Uploaded Data:")
-        st.dataframe(df)
+        st.dataframe(df, hide_index=True)
         if 'construct' in df.columns and 'item' in df.columns:
+            df = df.sort_values(by = 'construct')
+            df = df.head(20)
             st.session_state.constructs = df['construct'].tolist()
-            st.session_state.items = df['item'].tolist()
+            st.session_state.content = df['item'].tolist()
         else:
             st.error("The CSV file must contain 'construct' and 'item' columns.")
 
@@ -87,7 +89,7 @@ def text_input_method():
 
             results_df, final_alpha = pfa.process_constructs_and_items(constructs, items)
             st.write("Pseudo Reliability Measures")
-            st.dataframe(final_alpha)
+            st.dataframe(final_alpha, hide_index=True)
         else:
             st.error("Please enter valid constructs and items.")
 
@@ -112,7 +114,7 @@ def text_input_method():
             results_df_add = pd.concat([first_column, results_df_new], axis=1)
         
         st.write("Pseudo Loadings")
-        st.write(results_df_add)
+        st.dataframe(results_df_add, hide_index=True)
 
         st.write("Items Correlations")
         if len(items) > 1:
@@ -132,7 +134,29 @@ def text_input_method():
             ax.set_title("Construct Correlations", fontsize=10)
             st.pyplot(fig)
 
+def upload_method():
 
+    constructs = st.session_state.constructs
+    items = st.session_state.content
+    if constructs and items:
+        print(constructs)
+        results_df, final_alpha = pfa.process_constructs_and_items_from_csv(constructs, items)
+        st.write("Pseudo Reliability Measures")
+        st.dataframe(final_alpha, hide_index= True)
+    else:
+        st.error("Please enter valid constructs and items.")
+    try:
+        #create function out of this
+        cor_final, results_df_add = pfa.create_loading_matrix(results_df, constructs, items, 'oblimin')
+    except Exception as e:
+        st.write(f"FactorAnalyzer fitting failed: {e}")
+        first_column = results_df.iloc[:, :1]
+        results_df_new = results_df.drop('Item', axis=1).add_suffix('_corr')
+        results_df_add = pd.concat([first_column, results_df_new], axis=1)
+        
+    st.write("Pseudo Loadings")
+    st.dataframe(results_df_add, hide_index = True)
+    
 
 def main():
     if 'show_disclaimer' not in st.session_state:
@@ -146,6 +170,7 @@ def main():
 
         if input_method == 'Upload a dataset':
             upload_data()
+            upload_method()
         else:
             text_input_method()
 

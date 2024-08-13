@@ -141,10 +141,61 @@ def create_loading_matrix(results_df, constructs, items, rotation):
     np.fill_diagonal(cor_mat,1)
     cor_final = cor_mat
     cor_mat = cor_mat[len(constructs):, len(constructs):]
-    fa = FactorAnalyzer(n_factors=len(constructs), rotation = rotation, method='minres', use_smc=True, is_corr_matrix=True).fit(cor_mat)
+    names = list(set(constructs))
+    fa = FactorAnalyzer(n_factors=len(names), rotation = rotation, method='minres', use_smc=True, is_corr_matrix=True).fit(cor_mat)
     emp_load = fa.loadings_
     emp_load = pd.DataFrame(fa.loadings_, index=results_df.index, columns=results_df.columns[1:]).add_suffix('_efa_loadings')
     first_column = results_df.iloc[:, :1]
     results_df_new = results_df.drop('Item', axis=1).add_suffix('_corr')
     results_df_add = pd.concat([first_column, results_df_new, emp_load], axis=1)
     return cor_final, results_df_add
+
+def process_constructs_and_items_from_csv(constructs, items):
+
+    """
+    Processes the given constructs and items, computes cosine similarities, and calculates reliability metrics.
+    
+    Args:
+    constructs (list): A list of construct names.
+    items (list): A list of item names.
+    pfa (object): An object with methods for computing cosine similarities, Cronbach's alpha, and McDonald's omega.
+
+    Returns:
+    final_alpha (pd.DataFrame): A DataFrame containing constructs, Cronbach's alpha, McDonald's omega, and average cosine similarities.
+
+    This function performs the following steps:
+    1. Initializes a DataFrame with items as the index and a column for items.
+    2. Iterates over each construct to compute cosine similarities with items using `pfa.avg_cosine_matrix`.
+    3. Stores the computed similarities in the DataFrame, excluding the diagonal similarity.
+    4. Constructs a loading matrix from the DataFrame.
+    5. Computes Cronbach's alpha and McDonald's omega using the loading matrix.
+    6. Computes the average cosine similarity for each construct.
+    7. Returns a DataFrame with constructs, Cronbach's alpha, McDonald's omega, and average cosine similarities.
+    """
+
+    if constructs and items:
+        # Initialize DataFrame with items as index and an "Item" column
+        results_df = pd.DataFrame(index=items, columns=["Item"])
+        
+        # Compute cosine similarities for each construct
+        for construct in constructs:
+            if construct.strip() != "":
+                similarities = avg_cosine_matrix([construct], items)
+                index = constructs.index(construct)
+                results_df[construct] = np.delete(similarities[index], index)
+        
+        # Add items to the DataFrame
+        results_df["Item"] = items
+        
+        # Create loadings matrix
+        loadings_matrix = results_df.iloc[:, 1:].values
+        
+        names = list(set(constructs))
+        # Initialize final DataFrame to store reliability metrics
+        final_alpha = pd.DataFrame(index=names, columns=['Constructs'])
+        final_alpha['Std. Alpha'] = cronbach_alpha_from_loadings(loadings_matrix)
+        final_alpha['Omega'] = mcdonald_omega_total(loadings_matrix)
+        final_alpha['Average Cos'] = results_df.iloc[:, 1:].mean(axis=0)
+        final_alpha['Constructs'] = names
+        
+        return results_df, final_alpha
