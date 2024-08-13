@@ -26,9 +26,13 @@ def load_model_pfa():
         return None
 
 # Define functions
-def avg_cosine_matrix(constructs, items):
-    all_elements = constructs + items
-    cor_matrices = []
+def avg_cosine_matrix(constructs, items, drop_first = False):
+    if drop_first:
+        all_elements = items
+        cor_matrices = []
+    else:
+        all_elements = constructs + items
+        cor_matrices = []
     
     for mod in range(1,2):
         model = st.session_state.model_pfa

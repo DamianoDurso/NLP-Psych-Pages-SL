@@ -18,7 +18,8 @@ def load_model_gen():
              st.write("Model found!")
              time.sleep(1)
              time.sleep(1)
-             st.session_state.generator = pipeline(task='text-generation', model=model_path, tokenizer=model_path)
+             if 'generator' not in st.session_state:
+                 st.session_state.generator = pipeline(task='text-generation', model=model_path, tokenizer=model_path)
              st.write("Model loaded!")
     except Exception as e:
         logging.error(f'Error while loading models/tokenizer: {e}')
