@@ -48,7 +48,6 @@ def upload_data():
         st.dataframe(df, hide_index=True)
         if 'construct' in df.columns and 'item' in df.columns:
             df = df.sort_values(by = 'construct')
-            df = df.head(20)
             st.session_state.constructs = df['construct'].tolist()
             st.session_state.content = df['item'].tolist()
         else:
